@@ -5,12 +5,14 @@ import Wishlist from './Wishlist';
 import Order from './Order';
 import OrderItem from './OrderItem';
 import Address from './Address';
+import Testimonial from './Testimonial';
 
 // User associations
 User.hasMany(Rating, { foreignKey: 'userId', as: 'ratings' });
 User.hasMany(Wishlist, { foreignKey: 'userId', as: 'wishlist' });
 User.hasMany(Order, { foreignKey: 'userId', as: 'orders' });
 User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
+User.hasMany(Testimonial, { foreignKey: 'userId', as: 'testimonials' });
 
 // Product associations
 Product.hasMany(Rating, { foreignKey: 'productId', as: 'ratings' });
@@ -33,6 +35,9 @@ Order.hasMany(OrderItem, { foreignKey: 'orderId', as: 'items' });
 OrderItem.belongsTo(Order, { foreignKey: 'orderId', as: 'order' });
 OrderItem.belongsTo(Product, { foreignKey: 'productId', as: 'product' });
 
+// Testimonial associations
+Testimonial.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // Address associations
 Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -43,5 +48,6 @@ export {
   Wishlist,
   Order,
   OrderItem,
-  Address
+  Address,
+  Testimonial
 };

@@ -34,21 +34,25 @@ export const validateCoupon = async (req: AuthenticatedRequest, res: Response) =
     }
 
     // Check minimum purchase
-    if (orderTotal < coupon.minPurchase) {
+    const minPurchaseValue = parseFloat(coupon.minPurchase.toString());
+    if (orderTotal < minPurchaseValue) {
       return res.status(400).json({ 
-        message: `Minimum purchase of $${coupon.minPurchase.toFixed(2)} required to use this coupon` 
+        message: `Minimum purchase of $${minPurchaseValue.toFixed(2)} required to use this coupon` 
       });
     }
 
     // Calculate discount
     let discount = 0;
+    const discountValue = parseFloat(coupon.discountValue.toString());
+    const maxDiscountValue = coupon.maxDiscount ? parseFloat(coupon.maxDiscount.toString()) : null;
+    
     if (coupon.discountType === 'percentage') {
-      discount = (orderTotal * coupon.discountValue) / 100;
-      if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-        discount = coupon.maxDiscount;
+      discount = (orderTotal * discountValue) / 100;
+      if (maxDiscountValue && discount > maxDiscountValue) {
+        discount = maxDiscountValue;
       }
     } else {
-      discount = coupon.discountValue;
+      discount = discountValue;
     }
 
     const finalTotal = Math.max(0, orderTotal - discount);
@@ -60,7 +64,7 @@ export const validateCoupon = async (req: AuthenticatedRequest, res: Response) =
         code: coupon.code,
         description: coupon.description,
         discountType: coupon.discountType,
-        discountValue: coupon.discountValue,
+        discountValue: discountValue,
       },
       discount: parseFloat(discount.toFixed(2)),
       finalTotal: parseFloat(finalTotal.toFixed(2)),
@@ -155,9 +159,9 @@ export const createCoupon = async (req: AuthenticatedRequest, res: Response) => 
       code: code.toUpperCase(),
       description,
       discountType,
-      discountValue,
-      minPurchase: minPurchase || 0,
-      maxDiscount,
+      discountValue: parseFloat(discountValue),
+      minPurchase: minPurchase ? parseFloat(minPurchase) : 0,
+      maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
       usageLimit,
       expiryDate: expiryDate ? new Date(expiryDate) : null,
       isActive: isActive !== undefined ? isActive : true,
@@ -194,9 +198,9 @@ export const updateCoupon = async (req: AuthenticatedRequest, res: Response) => 
     // Update fields
     if (description !== undefined) coupon.description = description;
     if (discountType !== undefined) coupon.discountType = discountType;
-    if (discountValue !== undefined) coupon.discountValue = discountValue;
-    if (minPurchase !== undefined) coupon.minPurchase = minPurchase;
-    if (maxDiscount !== undefined) coupon.maxDiscount = maxDiscount;
+    if (discountValue !== undefined) coupon.discountValue = parseFloat(discountValue);
+    if (minPurchase !== undefined) coupon.minPurchase = parseFloat(minPurchase);
+    if (maxDiscount !== undefined) coupon.maxDiscount = maxDiscount ? parseFloat(maxDiscount) : null;
     if (usageLimit !== undefined) coupon.usageLimit = usageLimit;
     if (expiryDate !== undefined) coupon.expiryDate = expiryDate ? new Date(expiryDate) : null;
     if (isActive !== undefined) coupon.isActive = isActive;

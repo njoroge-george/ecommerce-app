@@ -465,11 +465,23 @@ export const sendNewsletterUnsubscribeEmail = async (to: string) => {
   }
 };
 
-module.exports = {
-  sendOrderConfirmationEmail,
-  sendOrderStatusEmail,
-  sendPasswordResetEmail,
-  sendNewsletterWelcomeEmail,
-  sendNewsletterUnsubscribeEmail,
-  getTransporter,
+// Generic send email function
+export const sendEmail = async (to: string, subject: string, html: string) => {
+  const mailOptions = {
+    from: `"EcoShop" <${process.env.SMTP_USER}>`,
+    to,
+    subject,
+    html,
+  };
+
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
+    throw error;
+  }
 };
+

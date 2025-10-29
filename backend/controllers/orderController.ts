@@ -50,6 +50,23 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    // Validate stock availability for all items before creating order
+    for (const item of items) {
+      const product = await Product.findByPk(item.id);
+      if (!product) {
+        return res.status(404).json({ 
+          message: `Product "${item.name}" not found` 
+        });
+      }
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ 
+          message: `Insufficient stock for "${product.name}". Only ${product.stock} units available.`,
+          productId: product.id,
+          availableStock: product.stock
+        });
+      }
+    }
+
     // Generate order number
     const orderNumber = `ORD-${Date.now()}`;
 
@@ -70,17 +87,26 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
       paymentMethod,
     });
 
-    // Create order items
+    // Create order items and update product stock
     const orderItems = await Promise.all(
-      items.map((item: any) =>
-        OrderItem.create({
+      items.map(async (item: any) => {
+        // Find the product and update its stock
+        const product = await Product.findByPk(item.id);
+        if (product) {
+          // Deduct the ordered quantity from stock
+          const newStock = Math.max(0, product.stock - item.quantity);
+          await product.update({ stock: newStock });
+          console.log(`📦 Stock updated for ${product.name}: ${product.stock} → ${newStock}`);
+        }
+
+        return OrderItem.create({
           orderId: newOrder.id,
           productId: item.id,
           productName: item.name,
           quantity: item.quantity,
           price: item.price,
-        })
-      )
+        });
+      })
     );
 
     // Send order confirmation email

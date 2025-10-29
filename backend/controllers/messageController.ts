@@ -59,7 +59,7 @@ export const getConversations = async (req: Request, res: Response) => {
       if (!conversationsMap.has(partnerId)) {
         // Fetch partner user info
         const partner = await User.findByPk(partnerId, {
-          attributes: ['id', 'firstName', 'lastName', 'email', 'role'],
+          attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'avatar'],
         });
 
         // Count unread messages
@@ -203,7 +203,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
       where: {
         role: 'customer',
       },
-      attributes: ['id', 'firstName', 'lastName', 'email', 'role'],
+      attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'avatar'],
       order: [['createdAt', 'DESC']],
     });
 

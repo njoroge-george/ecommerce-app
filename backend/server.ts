@@ -20,6 +20,7 @@ import recommendationRoutes from "./routes/recommendationRoutes";
 import mpesaRoutes from "./routes/mpesaRoutes";
 import premiumRoutes from "./routes/premium";
 import newsletterRoutes from "./routes/newsletter";
+import testimonialRoutes from "./routes/testimonials";
 import './models/associations'; // Initialize model associations
 
 dotenv.config();
@@ -66,6 +67,7 @@ app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/mpesa", mpesaRoutes);
 app.use("/api/premium", premiumRoutes);
 app.use("/api/newsletter", newsletterRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 app.use("/uploads", express.static("uploads"));
 
 // Socket.IO connection handling
