@@ -58,10 +58,16 @@ export const loginUser = async (req, res) => {
       token,
       user: {
         id: user.id,
-        firstName: user.name.split(" ")[0] || user.name,
-        lastName: user.name.split(" ").slice(1).join(" ") || "",
+        firstName: user.firstName || user.name?.split(" ")[0] || user.name,
+        lastName: user.lastName || user.name?.split(" ").slice(1).join(" ") || "",
         email: user.email,
         role: user.role || "customer",
+        avatar: user.avatar || null,
+        isVerified: user.isVerified || false,
+        phoneNumber: user.phoneNumber || null,
+        isPremium: user.isPremium || false,
+        premiumSince: user.premiumSince || null,
+        premiumExpiresAt: user.premiumExpiresAt || null,
       },
     });
   } catch (error) {

@@ -12,7 +12,8 @@ export const getRatingsForProduct = async (req: Request, res: Response) => {
       include: [
         {
           model: User,
-          attributes: ['id', 'name', 'email']
+          as: 'user',
+          attributes: ['id', 'name', 'firstName', 'lastName', 'email']
         }
       ],
       order: [['createdAt', 'DESC']]

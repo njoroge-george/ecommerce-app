@@ -18,6 +18,8 @@ import couponRoutes from "./routes/couponRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import recommendationRoutes from "./routes/recommendationRoutes";
 import mpesaRoutes from "./routes/mpesaRoutes";
+import premiumRoutes from "./routes/premium";
+import newsletterRoutes from "./routes/newsletter";
 import './models/associations'; // Initialize model associations
 
 dotenv.config();
@@ -62,6 +64,8 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/mpesa", mpesaRoutes);
+app.use("/api/premium", premiumRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 app.use("/uploads", express.static("uploads"));
 
 // Socket.IO connection handling

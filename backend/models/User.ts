@@ -12,6 +12,9 @@ class User extends Model {
   declare role: string;
   declare avatar: string;
   declare isVerified: boolean;
+  declare isPremium: boolean;
+  declare premiumSince: Date;
+  declare premiumExpiresAt: Date;
 }
 
 User.init({
@@ -25,6 +28,9 @@ User.init({
   role: { type: DataTypes.ENUM("customer", "admin", "moderator"), defaultValue: "customer" },
   avatar: { type: DataTypes.STRING, allowNull: true },
   isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
+  isPremium: { type: DataTypes.BOOLEAN, defaultValue: false },
+  premiumSince: { type: DataTypes.DATE, allowNull: true },
+  premiumExpiresAt: { type: DataTypes.DATE, allowNull: true },
 }, {
   sequelize,
   modelName: 'User',

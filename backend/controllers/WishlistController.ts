@@ -16,6 +16,7 @@ export const getUserWishlist = async (req: AuthenticatedRequest, res: Response) 
       include: [
         {
           model: Product,
+          as: 'product',
           attributes: ['id', 'name', 'description', 'price', 'category', 'stock', 'image']
         }
       ],
@@ -59,6 +60,7 @@ export const addToWishlist = async (req: AuthenticatedRequest, res: Response) =>
       include: [
         {
           model: Product,
+          as: 'product',
           attributes: ['id', 'name', 'description', 'price', 'category', 'stock', 'image']
         }
       ]

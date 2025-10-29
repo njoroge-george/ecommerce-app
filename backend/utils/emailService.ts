@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -6,9 +6,9 @@ dotenv.config();
 // Create transporter lazily
 let transporter: any = null;
 
-const getTransporter = () => {
+export const getTransporter = () => {
   if (!transporter) {
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true for 465, false for other ports
@@ -255,9 +255,221 @@ export const sendPasswordResetEmail = async (to: string, resetToken: string, use
   }
 };
 
+export const sendNewsletterWelcomeEmail = async (to: string) => {
+  const mailOptions = {
+    from: `"EcoShop Newsletter" <${process.env.SMTP_USER}>`,
+    to,
+    subject: '🎉 Welcome to EcoShop Newsletter!',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { 
+              background: linear-gradient(135deg, #093FB4 0%, #ED3500 100%); 
+              color: white; 
+              padding: 30px 20px; 
+              text-align: center; 
+              border-radius: 10px 10px 0 0;
+            }
+            .content { background: #f9f9f9; padding: 30px 20px; }
+            .welcome-box { 
+              background: white; 
+              padding: 25px; 
+              margin: 20px 0; 
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .benefits { 
+              background: white; 
+              padding: 20px; 
+              margin: 20px 0; 
+              border-radius: 8px;
+            }
+            .benefit-item {
+              padding: 10px 0;
+              border-bottom: 1px solid #eee;
+            }
+            .benefit-item:last-child {
+              border-bottom: none;
+            }
+            .button { 
+              display: inline-block; 
+              padding: 15px 40px; 
+              background: #093FB4; 
+              color: white; 
+              text-decoration: none; 
+              border-radius: 5px; 
+              margin: 20px 0;
+              font-weight: bold;
+            }
+            .footer { 
+              text-align: center; 
+              padding: 20px; 
+              color: #666; 
+              font-size: 12px; 
+              background: #f9f9f9;
+              border-radius: 0 0 10px 10px;
+            }
+            .emoji { font-size: 24px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 style="margin: 0; font-size: 32px;">📬 Welcome to Our Newsletter!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">You're now part of our exclusive community</p>
+            </div>
+            <div class="content">
+              <div class="welcome-box">
+                <h2 style="color: #093FB4; margin-top: 0;">Thank You for Subscribing! 🎉</h2>
+                <p>We're thrilled to have you join our community of over <strong>50,000+ happy customers</strong>.</p>
+                <p>Get ready to receive:</p>
+              </div>
+              
+              <div class="benefits">
+                <div class="benefit-item">
+                  <span class="emoji">🎁</span> <strong>Exclusive Deals & Discounts</strong> - Special offers just for subscribers
+                </div>
+                <div class="benefit-item">
+                  <span class="emoji">✨</span> <strong>New Product Launches</strong> - Be the first to know about new arrivals
+                </div>
+                <div class="benefit-item">
+                  <span class="emoji">💡</span> <strong>Expert Tips & Guides</strong> - Helpful content curated for you
+                </div>
+                <div class="benefit-item">
+                  <span class="emoji">🎉</span> <strong>Seasonal Sales</strong> - Early access to our biggest promotions
+                </div>
+                <div class="benefit-item">
+                  <span class="emoji">🏆</span> <strong>Premium Member Benefits</strong> - Learn about our VIP program
+                </div>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <p style="font-size: 18px; color: #093FB4; font-weight: bold;">Start Shopping Now!</p>
+                <a href="http://localhost:5173/shop" class="button">Explore Our Products</a>
+              </div>
+              
+              <div class="welcome-box">
+                <p style="margin: 0;"><strong>💎 Want More?</strong> Upgrade to Premium Membership for exclusive perks, free shipping, and priority support!</p>
+                <a href="http://localhost:5173/premium" style="color: #093FB4; text-decoration: none; font-weight: bold;">Learn More →</a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>&copy; ${new Date().getFullYear()} EcoShop. All rights reserved.</p>
+              <p style="margin: 5px 0;">You're receiving this because you subscribed to our newsletter.</p>
+              <p style="margin: 5px 0; color: #999;">
+                Don't want these emails? <a href="http://localhost:5173" style="color: #093FB4;">Unsubscribe</a>
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Newsletter welcome email sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending newsletter welcome email:', error);
+    return false;
+  }
+};
+
+export const sendNewsletterUnsubscribeEmail = async (to: string) => {
+  const mailOptions = {
+    from: `"EcoShop Newsletter" <${process.env.SMTP_USER}>`,
+    to,
+    subject: 'Sorry to See You Go - EcoShop Newsletter',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { 
+              background: #6c757d; 
+              color: white; 
+              padding: 30px 20px; 
+              text-align: center; 
+              border-radius: 10px 10px 0 0;
+            }
+            .content { background: #f9f9f9; padding: 30px 20px; }
+            .message-box { 
+              background: white; 
+              padding: 25px; 
+              margin: 20px 0; 
+              border-radius: 8px;
+              text-align: center;
+            }
+            .button { 
+              display: inline-block; 
+              padding: 12px 30px; 
+              background: #093FB4; 
+              color: white; 
+              text-decoration: none; 
+              border-radius: 5px; 
+              margin: 20px 0;
+              font-weight: bold;
+            }
+            .footer { 
+              text-align: center; 
+              padding: 20px; 
+              color: #666; 
+              font-size: 12px; 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 style="margin: 0;">We'll Miss You! 😢</h1>
+            </div>
+            <div class="content">
+              <div class="message-box">
+                <h2 style="color: #6c757d; margin-top: 0;">You've Been Unsubscribed</h2>
+                <p>You've successfully unsubscribed from our newsletter. We're sorry to see you go!</p>
+                <p>You will no longer receive promotional emails from EcoShop.</p>
+                
+                <p style="margin-top: 30px;"><strong>Changed your mind?</strong></p>
+                <a href="http://localhost:5173" class="button">Subscribe Again</a>
+                
+                <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                  We'd love to hear your feedback! Let us know why you unsubscribed so we can improve.
+                </p>
+              </div>
+            </div>
+            <div class="footer">
+              <p>&copy; ${new Date().getFullYear()} EcoShop. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Newsletter unsubscribe confirmation sent to ${to}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending unsubscribe confirmation email:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendOrderConfirmationEmail,
   sendOrderStatusEmail,
   sendPasswordResetEmail,
+  sendNewsletterWelcomeEmail,
+  sendNewsletterUnsubscribeEmail,
   getTransporter,
 };
