@@ -15,6 +15,9 @@ class User extends Model {
   declare isPremium: boolean;
   declare premiumSince: Date;
   declare premiumExpiresAt: Date;
+  declare twoFactorSecret: string | null;
+  declare twoFactorEnabled: boolean;
+  declare twoFactorBackupCodes: string[] | null;
 }
 
 User.init({
@@ -31,6 +34,9 @@ User.init({
   isPremium: { type: DataTypes.BOOLEAN, defaultValue: false },
   premiumSince: { type: DataTypes.DATE, allowNull: true },
   premiumExpiresAt: { type: DataTypes.DATE, allowNull: true },
+  twoFactorSecret: { type: DataTypes.STRING(255), allowNull: true },
+  twoFactorEnabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  twoFactorBackupCodes: { type: DataTypes.JSON, allowNull: true },
 }, {
   sequelize,
   modelName: 'User',

@@ -239,19 +239,30 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     order.status = status as any;
     await order.save();
 
-    // Send order status email
+    // Send order status email with complete details
     try {
       const emailData: any = {
         orderNumber: order.orderNumber,
         customerName: order.customerName,
         status: status,
+        total: order.total,
+        orderDate: order.createdAt.toISOString(),
       };
       
+      // Add estimated delivery for shipped orders (3-5 business days from now)
       if (status === 'shipped') {
+        const deliveryDate = new Date();
+        deliveryDate.setDate(deliveryDate.getDate() + 4); // 4 days estimate
+        emailData.estimatedDelivery = deliveryDate.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
         emailData.trackingNumber = `TRK-${Date.now()}`;
       }
       
       await sendOrderStatusEmail(order.customerEmail, emailData);
+      console.log(`📧 Status update email sent for order ${order.orderNumber}`);
     } catch (emailError) {
       console.error("Failed to send order status email:", emailError);
       // Don't fail the status update if email fails

@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { generateOrderStatusEmail, getStatusMessage } from './orderStatusEmailTemplate';
 
 dotenv.config();
 
@@ -118,82 +119,72 @@ export const sendOrderStatusEmail = async (
     customerName: string;
     status: string;
     trackingNumber?: string;
+    total?: number;
+    orderDate?: string;
+    estimatedDelivery?: string;
   }
 ) => {
-  const statusMessages: any = {
-    confirmed: {
-      subject: 'Order Confirmed',
-      message: 'Your order has been confirmed and is being prepared.',
-    },
-    processing: {
-      subject: 'Order Processing',
-      message: 'We are currently processing your order.',
-    },
-    shipped: {
-      subject: 'Order Shipped',
-      message: 'Great news! Your order has been shipped.',
-    },
-    delivered: {
-      subject: 'Order Delivered',
-      message: 'Your order has been delivered. We hope you enjoy your purchase!',
-    },
+  const statusTitles: any = {
+    pending: 'Order Received',
+    confirmed: 'Order Confirmed',
+    processing: 'Order Processing',
+    shipped: 'Order Shipped',
+    delivered: 'Order Delivered',
+    cancelled: 'Order Cancelled',
   };
 
-  const statusInfo = statusMessages[orderDetails.status] || {
-    subject: 'Order Update',
-    message: 'Your order status has been updated.',
-  };
+  const subject = `${statusTitles[orderDetails.status] || 'Order Update'} - ${orderDetails.orderNumber}`;
+  
+  // Format order date
+  const formattedDate = orderDetails.orderDate 
+    ? new Date(orderDetails.orderDate).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    : new Date().toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+  // Format total
+  const formattedTotal = orderDetails.total 
+    ? `$${orderDetails.total.toFixed(2)}`
+    : 'N/A';
+
+  // Generate tracking URL
+  const trackingUrl = `http://localhost:5173/order-tracking/${orderDetails.orderNumber}`;
+
+  // Get status-specific message
+  const statusMessage = getStatusMessage(orderDetails.status);
+
+  // Generate email HTML
+  const emailHtml = generateOrderStatusEmail({
+    customerName: orderDetails.customerName,
+    orderNumber: orderDetails.orderNumber,
+    status: orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1),
+    statusMessage,
+    orderDate: formattedDate,
+    total: formattedTotal,
+    trackingUrl,
+    estimatedDelivery: orderDetails.estimatedDelivery,
+  });
 
   const mailOptions = {
-    from: `"EcoShop" <${process.env.SMTP_USER}>`,
+    from: `"Your Store" <${process.env.SMTP_USER}>`,
     to,
-    subject: `${statusInfo.subject} - ${orderDetails.orderNumber}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; }
-            .status-box { background: white; padding: 20px; margin: 20px 0; border-left: 4px solid #667eea; }
-            .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${statusInfo.subject}</h1>
-            </div>
-            <div class="content">
-              <p>Hello ${orderDetails.customerName},</p>
-              
-              <div class="status-box">
-                <h2>Order #${orderDetails.orderNumber}</h2>
-                <p>${statusInfo.message}</p>
-                ${orderDetails.trackingNumber ? `<p><strong>Tracking Number:</strong> ${orderDetails.trackingNumber}</p>` : ''}
-              </div>
-              
-              <p>You can track your order status anytime:</p>
-              <a href="http://localhost:5173/my-orders" class="button">Track Order</a>
-            </div>
-            <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} EcoShop. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `,
+    subject,
+    html: emailHtml,
   };
 
   try {
     const transporter = getTransporter();
     await transporter.sendMail(mailOptions);
-    console.log(`Order status email sent to ${to}`);
+    console.log(`✅ Order status email sent to ${to} - Status: ${orderDetails.status}`);
   } catch (error) {
-    console.error('Error sending order status email:', error);
+    console.error('❌ Error sending order status email:', error);
+    throw error;
   }
 };
 

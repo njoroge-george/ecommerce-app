@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import session from "express-session";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import sequelize, { connectDB } from "./config/db";
@@ -18,9 +19,13 @@ import couponRoutes from "./routes/couponRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import recommendationRoutes from "./routes/recommendationRoutes";
 import mpesaRoutes from "./routes/mpesaRoutes";
+import whatsappRoutes from "./routes/whatsappRoutes";
 import premiumRoutes from "./routes/premium";
 import newsletterRoutes from "./routes/newsletter";
 import testimonialRoutes from "./routes/testimonials";
+import twoFactorRoutes from "./routes/twoFactor";
+const googleAuthRoutes = require("./routes/googleAuth");
+const passport = require("./config/passport");
 import './models/associations'; // Initialize model associations
 
 dotenv.config();
@@ -47,11 +52,29 @@ app.use(
 );
 app.use(express.json());
 
+// Session configuration for Passport
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'your-session-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Connect to DB
 connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", googleAuthRoutes); // Google OAuth routes
 app.use("/api/products", productRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
@@ -65,9 +88,11 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/mpesa", mpesaRoutes);
+app.use("/api/whatsapp", whatsappRoutes);
 app.use("/api/premium", premiumRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/2fa", twoFactorRoutes);
 app.use("/uploads", express.static("uploads"));
 
 // Socket.IO connection handling

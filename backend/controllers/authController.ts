@@ -36,7 +36,7 @@ export const registerUser = async (req, res) => {
 // LOGIN
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, twoFactorCode, useBackupCode } = req.body;
 
     // 1. Find user
     const user = await User.findOne({ where: { email } });
@@ -46,14 +46,58 @@ export const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // 3. Generate JWT
+    // 3. Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // If 2FA code is not provided, return requiresTwoFactor flag
+      if (!twoFactorCode) {
+        // Generate temporary token for 2FA verification
+        const tempToken = jwt.sign(
+          { id: user.id, email: user.email, temp: true },
+          process.env.JWT_SECRET,
+          { expiresIn: "5m" } // Short-lived token
+        );
+        return res.status(200).json({
+          requiresTwoFactor: true,
+          tempToken,
+          message: "Please enter your 2FA code",
+        });
+      }
+
+      // Verify 2FA code or backup code
+      if (useBackupCode) {
+        // Verify backup code
+        const codeIndex = user.twoFactorBackupCodes?.indexOf(twoFactorCode.toUpperCase());
+        if (codeIndex === -1 || codeIndex === undefined) {
+          return res.status(400).json({ message: "Invalid backup code" });
+        }
+        // Remove used backup code
+        const updatedBackupCodes = [...user.twoFactorBackupCodes];
+        updatedBackupCodes.splice(codeIndex, 1);
+        user.twoFactorBackupCodes = updatedBackupCodes;
+        await user.save();
+      } else {
+        // Verify TOTP code
+        const speakeasy = require("speakeasy");
+        const verified = speakeasy.totp.verify({
+          secret: user.twoFactorSecret,
+          encoding: "base32",
+          token: twoFactorCode,
+          window: 2,
+        });
+        if (!verified) {
+          return res.status(400).json({ message: "Invalid 2FA code" });
+        }
+      }
+    }
+
+    // 4. Generate JWT
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // 4. Respond with token and user
+    // 5. Respond with token and user
     return res.status(200).json({
       token,
       user: {
